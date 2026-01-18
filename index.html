@@ -396,6 +396,11 @@
             let hoveredCard = null;
             let isChaos = false; // New Chaos state
 
+            // Fireworks State
+            const fireworks = [];
+            const fireworkGroup = new THREE.Group();
+            let ambientFireworkTimer = 0;
+
             // Hand Tracking
             let handController = null;
             let virtualCursor = null;
@@ -442,6 +447,8 @@
                 // Create Dolls (New Refined Style)
                 createBubu(); // White Panda-Bear
                 createDudu(); // Brown Bear
+
+                scene.add(fireworkGroup);
 
                 // 3. Interactions
                 controls = new OrbitControls(camera, renderer.domElement);
@@ -534,6 +541,108 @@
 
                 // Link Logic
                 document.getElementById('link-btn').addEventListener('click', handleUrlInput);
+            }
+
+            // --- Fireworks Logic ---
+            class Particle {
+                constructor(pos, color) {
+                    this.pos = pos.clone();
+                    this.vel = new THREE.Vector3(
+                        (Math.random() - 0.5) * 2,
+                        (Math.random() - 0.5) * 2,
+                        (Math.random() - 0.5) * 2
+                    ).multiplyScalar(Math.random() * 2 + 1);
+                    this.life = 1.0;
+                    this.decay = 0.01 + Math.random() * 0.02;
+                    this.color = color;
+                }
+                update() {
+                    this.pos.add(this.vel);
+                    this.vel.multiplyScalar(0.96); // Air resistance
+                    this.life -= this.decay;
+                }
+            }
+
+            class Firework {
+                constructor(x, y, z, color, isAmbient = false) {
+                    this.particles = [];
+                    // Finer particles: higher count, smaller size
+                    const particleCount = isAmbient ? (40 + Math.random() * 40) : (150 + Math.floor(Math.random() * 100));
+                    const pos = new THREE.Vector3(x, y, z);
+                    for (let i = 0; i < particleCount; i++) {
+                        this.particles.push(new Particle(pos, color));
+                    }
+
+                    // Geometry & Material for efficient rendering
+                    this.geometry = new THREE.BufferGeometry();
+                    this.material = new THREE.PointsMaterial({
+                        size: 1.2, // Finer size
+                        vertexColors: true,
+                        transparent: true,
+                        blending: THREE.AdditiveBlending,
+                        depthWrite: false
+                    });
+
+                    this.points = new THREE.Points(this.geometry, this.material);
+                    fireworkGroup.add(this.points);
+                }
+
+                update() {
+                    const positions = [];
+                    const colors = [];
+
+                    for (let i = this.particles.length - 1; i >= 0; i--) {
+                        const p = this.particles[i];
+                        p.update();
+                        if (p.life <= 0) {
+                            this.particles.splice(i, 1);
+                        } else {
+                            positions.push(p.pos.x, p.pos.y, p.pos.z);
+                            const c = p.color;
+                            // Fade color based on life
+                            colors.push(c.r * p.life, c.g * p.life, c.b * p.life);
+                        }
+                    }
+
+                    this.geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+                    this.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+                    this.material.opacity = this.particles.length > 0 ? this.particles[0].life : 0;
+
+                    if (this.particles.length === 0) {
+                        fireworkGroup.remove(this.points);
+                        this.geometry.dispose();
+                        this.material.dispose();
+                        return false; // Dead
+                    }
+                    return true; // Alive
+                }
+            }
+
+            function triggerFireworks() {
+                const colors = [new THREE.Color(0xff69b4), new THREE.Color(0xffd700), new THREE.Color(0x00ffff), new THREE.Color(0xffffff)];
+                // Transition burst (Large)
+                for (let i = 0; i < 12; i++) {
+                    setTimeout(() => {
+                        const angle = Math.random() * Math.PI * 2;
+                        const radius = 20 + Math.random() * 50;
+                        const x = Math.cos(angle) * radius;
+                        const y = Math.sin(angle) * radius;
+                        const z = (Math.random() - 0.5) * 60;
+                        const color = colors[Math.floor(Math.random() * colors.length)];
+                        fireworks.push(new Firework(x, y, z, color, false));
+                    }, i * 100);
+                }
+            }
+
+            function spawnAmbientFirework() {
+                const colors = [new THREE.Color(0xff69b4), new THREE.Color(0xffd700), new THREE.Color(0x00ffff), new THREE.Color(0xffffff), new THREE.Color(0x9400d3)];
+                // Randomly spread across the universe
+                const range = 400;
+                const x = (Math.random() - 0.5) * range;
+                const y = (Math.random() - 0.5) * range;
+                const z = (Math.random() - 0.5) * range;
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                fireworks.push(new Firework(x, y, z, color, true));
             }
 
             // --- URL Conversion Helper ---
@@ -987,7 +1096,7 @@
                 if (currentMode === 'HEART') {
                     // WARP MODE
                     currentMode = 'TRANSITION';
-                    btn.innerText = 'RETURN TO SPACE';
+                    btn.title = 'Return to Space';
                     instr.innerText = 'Warping to Core...';
 
                     // Reduced duration from 5.0 to 3.0 for better responsiveness
@@ -1029,13 +1138,16 @@
                                     delay: i * 0.01 // Fast ripple effect
                                 });
                             });
+
+                            // Launch Celebration!
+                            triggerFireworks();
                         }
                     });
 
                 } else {
                     // Return to Heart
                     currentMode = 'HEART';
-                    btn.innerText = 'EXPLORE MILKY WAY';
+                    btn.title = 'Explore Galaxy';
                     instr.innerText = 'Ready to dive into the Heart?';
 
                     // Hide Gallery
@@ -1633,6 +1745,20 @@
                 }
 
                 renderer.render(scene, camera);
+
+                // Update Fireworks
+                for (let i = fireworks.length - 1; i >= 0; i--) {
+                    if (!fireworks[i].update()) {
+                        fireworks.splice(i, 1);
+                    }
+                }
+
+                // Ambient Spawning (every ~2 seconds)
+                ambientFireworkTimer++;
+                if (ambientFireworkTimer > 120) {
+                    spawnAmbientFirework();
+                    ambientFireworkTimer = 0;
+                }
             }
 
             // --- Roboust Hand Controller Class ---
