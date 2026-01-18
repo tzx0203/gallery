@@ -197,7 +197,7 @@
         <!-- Header -->
         <div class="flex justify-between items-start pointer-events-auto">
             <div>
-                <h1 class="text-white text-3xl font-bold tracking-tight">Happy Universe</h1>
+                <h1 class="text-white text-3xl font-bold tracking-tight">Hi Nugget Rabbit Meinv SIa</h1>
                 <p class="text-pink-300 text-xs font-bold tracking-[0.3em] uppercase mt-1">Spatial Gallery</p>
             </div>
 
@@ -284,6 +284,10 @@
                     <span class="gesture-icon">☝️</span>
                     <span class="gesture-desc">Point (Hold): Open Photo</span>
                 </div>
+                <div class="gesture-row" id="g-chaos">
+                    <span class="gesture-icon">✋</span>
+                    <span class="gesture-desc">Palm (Hold): Chaos Mode</span>
+                </div>
                 <div class="mt-3 text-[10px] text-gray-400 italic" id="gesture-status">Status: Waiting for Hand...</div>
             </div> <!-- End Content -->
             <!-- Minimal View (Hidden by default) -->
@@ -331,6 +335,7 @@
             let time = 0;
             let raycaster, mouse;
             let hoveredCard = null;
+            let isChaos = false; // New Chaos state
 
             // Hand Tracking
             let handController = null;
@@ -954,6 +959,7 @@
                     instr.innerText = 'Ready to dive into the Heart?';
 
                     // Hide Gallery
+                    isChaos = false; // Reset Chaos
                     gsap.to(galleryGroup.scale, {
                         x: 0, y: 0, z: 0, duration: 0.5, onComplete: () => {
                             galleryGroup.visible = false;
@@ -979,6 +985,43 @@
                         onComplete: () => controls.enabled = true
                     });
                 }
+            }
+
+            function toggleChaos() {
+                if (currentMode !== 'GALLERY') return;
+                isChaos = !isChaos;
+                const instr = document.getElementById('instruction-text');
+                instr.innerText = isChaos ? "CHAOS MODE ACTIVATED!" : "Returning to Order...";
+                setTimeout(() => { if (currentMode === 'GALLERY') instr.innerText = 'Hover to interact with memories'; }, 2000);
+
+                galleryGroup.children.forEach((child, i) => {
+                    if (child.isMesh && child.userData.id !== undefined) {
+                        if (isChaos) {
+                            // Scatter to random positions
+                            const range = 300;
+                            const targetPos = new THREE.Vector3(
+                                (Math.random() * 2 - 1) * range,
+                                (Math.random() * 2 - 1) * range,
+                                (Math.random() * 2 - 1) * range
+                            );
+                            gsap.to(child.position, {
+                                x: targetPos.x, y: targetPos.y, z: targetPos.z,
+                                duration: 2.0,
+                                ease: "power2.inOut",
+                                delay: i * 0.005
+                            });
+                        } else {
+                            // Return to original sphere positions
+                            const orig = child.userData.originalPos;
+                            gsap.to(child.position, {
+                                x: orig.x, y: orig.y, z: orig.z,
+                                duration: 2.0,
+                                ease: "power2.inOut",
+                                delay: i * 0.005
+                            });
+                        }
+                    }
+                });
             }
 
             // --- Existing Graphics ---
@@ -1297,6 +1340,21 @@
                             window.fistTimer = 0;
                         }
 
+                        // 5. PALM (Chaos)
+                        if (currentGesture === 'PALM') {
+                            const row = document.getElementById('g-chaos'); if (row) row.classList.add('active');
+                            if (currentMode === 'GALLERY') {
+                                if (!window.palmTimer) window.palmTimer = 0;
+                                window.palmTimer += 0.02;
+                                if (window.palmTimer > 1.0) {
+                                    toggleChaos();
+                                    window.palmTimer = 0;
+                                }
+                            }
+                        } else {
+                            window.palmTimer = 0;
+                        }
+
                         // 4. POINT/OPEN (Nav & Interaction)
                         if (currentGesture === 'POINT' || currentGesture === 'OPEN') {
                             if (currentGesture === 'POINT') {
@@ -1448,6 +1506,12 @@
                     }
                     // Slow rotation
                     galleryGroup.rotation.y = Math.sin(time * 0.1) * 0.1;
+
+                    // CHAOS Swirl
+                    if (isChaos) {
+                        galleryGroup.rotation.y += 0.005;
+                        galleryGroup.rotation.z += 0.002;
+                    }
                 }
 
                 // --- 4. Virtual Cursor Feedback ---
@@ -1463,6 +1527,11 @@
                     else if (currentGesture === 'THREE_FINGER') {
                         virtualCursor.material.color.setHex(0x00ffff);
                         virtualCursor.scale.setScalar(1.5);
+                    }
+                    else if (currentGesture === 'PALM') {
+                        virtualCursor.material.color.setHex(0xffffff); // White for chaos
+                        virtualCursor.scale.setScalar(2.0);
+                        virtualCursor.rotation.z += 0.1; // Spin!
                     }
                     else if (isHandHovering) {
                         virtualCursor.material.color.setHex(0x00ff00); // Green when active
@@ -1620,6 +1689,9 @@
                         // 4. POINT (Index only)
                         const isPoint = isIndexExt && !isMiddleExt && isRingCurled && isPinkyCurled;
 
+                        // 5. PALM Detection (All fingers broad open)
+                        const isPalm = isIndexExt && isMiddleExt && isRingExt && isPinkyExt && isThumbExt;
+
                         // Decision Tree
                         if (isFist) {
                             this.gesture = 'FIST';
@@ -1629,6 +1701,8 @@
                             this.gesture = 'THREE_FINGER';
                         } else if (isPoint) {
                             this.gesture = 'POINT';
+                        } else if (isPalm) {
+                            this.gesture = 'PALM';
                         } else {
                             this.gesture = 'OPEN';
                         }
