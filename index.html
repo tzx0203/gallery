@@ -146,7 +146,8 @@
 
     <style>
         /* Ensure 3D Canvas interacts */
-        canvas {
+        /* Ensure 3D Canvas interacts */
+        #canvas-container canvas {
             pointer-events: auto !important;
             touch-action: none;
             outline: none;
@@ -154,7 +155,31 @@
             top: 0;
             left: 0;
             z-index: 1;
-            /* Above background, below UI */
+            /* Below UI overlay */
+        }
+
+        /* Force UI on top */
+        #ui-layer {
+            z-index: 1000 !important;
+        }
+
+        /* Ensure UI elements inside the overlay can still receive clicks/touches */
+        #ui-layer * {
+            pointer-events: auto !important;
+        }
+
+        /* Ensure UI buttons are above the canvas and receive clicks */
+        .glass-btn {
+            position: relative;
+            z-index: 1001;
+            pointer-events: auto !important;
+        }
+
+        /* Force buttons to be clickable */
+        .glass-btn,
+        .pointer-events-auto,
+        button {
+            pointer-events: auto !important;
         }
     </style>
 </head>
@@ -162,7 +187,7 @@
 <body>
 
     <!-- UI Overlay: High Z-Index but click-through -->
-    <div id="ui-layer" class="absolute inset-0 z-50 flex flex-col justify-between p-6" style="pointer-events: none;">
+    <div id="ui-layer" class="absolute inset-0 z-50 flex flex-col justify-between p-6" style="pointer-events: auto;">
 
         <!-- Header -->
         <div class="flex justify-between items-start pointer-events-auto">
@@ -362,10 +387,15 @@
                 raycaster = new THREE.Raycaster();
                 mouse = new THREE.Vector2();
 
-                window.addEventListener('resize', onWindowResize);
                 window.addEventListener('mousemove', onMouseMove);
-                window.addEventListener('touchstart', onTouchMove, { passive: false });
-                window.addEventListener('touchmove', onTouchMove, { passive: false });
+
+                // Attach Touch Listeners to Canvas ONLY to avoid blocking UI buttons
+                const canvasEl = renderer.domElement;
+                canvasEl.style.touchAction = 'none'; // Force no scroll on canvas
+                canvasEl.addEventListener('touchstart', onTouchMove, { passive: false });
+                canvasEl.addEventListener('touchmove', onTouchMove, { passive: false });
+                // Also add logic to update mouse on touch start/move for the raycaster
+
 
                 // Hand Controller Init
                 handController = new HandController();
@@ -1148,10 +1178,17 @@
             }
 
             function onTouchMove(event) {
+                // If the touch originates on a UI button, ignore it so the button can receive the event
+                if (event.target.closest('button, .glass-btn')) {
+                    return;
+                }
                 if (!isCameraActive && event.touches.length > 0) {
+                    // Capture coords for Raycasting without preventing default behavior
                     const touch = event.touches[0];
-                    mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
-                    mouse.y = - (touch.clientY / window.innerHeight) * 2 + 1;
+                    const rect = renderer.domElement.getBoundingClientRect();
+                    // Calculate relative to canvas, not window, for accuracy if canvas isn't full screen (it is here, but good practice)
+                    mouse.x = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
+                    mouse.y = - ((touch.clientY - rect.top) / rect.height) * 2 + 1;
                 }
             }
 
@@ -1610,6 +1647,5 @@
             animate();
         </script>
 </body>
-
 
 </html>
