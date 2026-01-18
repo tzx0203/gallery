@@ -221,8 +221,6 @@
         <div class="flex justify-between items-start pointer-events-auto">
             <div>
                 <h1 class="title-gradient text-3xl font-extrabold tracking-tighter">Hi Nugget Rabbit Meinv SIa</h1>
-                <p class="text-pink-300 text-[10px] font-black tracking-[0.5em] uppercase mt-1 opacity-80">Spatial
-                    Gallery / Chaos Core</p>
             </div>
 
             <div class="flex gap-3 pointer-events-auto items-center">
@@ -258,13 +256,22 @@
                 </button>
 
                 <button id="explore-btn"
-                    class="glass-panel glass-btn px-3 py-1.5 rounded-full text-[10px] font-bold tracking-widest transition border-pink-500/30 border">
-                    EXPLORE
+                    class="glass-panel glass-btn p-1.5 rounded-full text-[10px] transition border-pink-500/30 border flex items-center justify-center"
+                    title="Explore / Jump to Core">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-pink-400 pointer-events-none"
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z" />
+                    </svg>
                 </button>
                 <button id="cam-btn"
-                    class="glass-panel glass-btn px-3 py-1.5 rounded-full text-[10px] transition flex items-center gap-1 font-bold tracking-wide"
-                    title="Enable/Disable Hand Control">
-                    HAND MAGIC
+                    class="glass-panel glass-btn p-1.5 rounded-full text-[10px] transition flex items-center justify-center font-bold tracking-wide"
+                    title="Toggle Hand Magic">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-pink-400 pointer-events-none"
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
                 </button>
 
                 <!-- Debug View Toggle -->
@@ -346,6 +353,21 @@
         <script type="module">
             import * as THREE from 'three';
             import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+            // --- CONFIGURATION: YOUR IMAGES ---
+            // Replace these URLs with your own photos!
+            // Tips: 
+            // 1. Hosted URLs: Direct links from Google Drive, Dropbox, etc.
+            // 2. Local Files: If using GitHub, upload images to your repo and use relative paths like "./my-photo.jpg".
+            const myPhotos = [
+                "https://images.unsplash.com/photo-1501854140884-074bf86ee911?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+                "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+                "https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+                "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+                "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+                "https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+            ];
+            // ---------------------------------
 
             // Global Error Handler for Debugging
             window.onerror = function (msg, url, line, col, error) {
@@ -915,15 +937,8 @@
 
                 // 2. Floating Cards Vortex
 
-                // Initial default photos
-                const myPhotos = [
-                    "https://images.unsplash.com/photo-1501854140884-074bf86ee911?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-                    "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-                    "https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-                    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-                    "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-                    "https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-                ];
+                // (Photos are now preloaded at the top of the script)
+
 
                 const loader = new THREE.TextureLoader();
                 const cardCount = 100; // Increased from 40
@@ -1638,12 +1653,12 @@
                     const btn = document.getElementById('cam-btn');
                     if (this.active) {
                         this.stop();
-                        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-pink-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>`;
+                        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-pink-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>`;
                     } else {
-                        btn.innerText = "Starting...";
+                        btn.innerHTML = `<span class="text-[8px] animate-pulse">...</span>`;
                         await this.start();
-                        if (this.active) btn.innerText = "STOP";
-                        else btn.innerHTML = "Error :(";
+                        if (this.active) btn.innerHTML = `<span class="text-pink-100 scale-75">🛑</span>`;
+                        else btn.innerHTML = `<span class="text-red-500">!</span>`;
                     }
                 }
 
