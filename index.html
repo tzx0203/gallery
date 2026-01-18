@@ -516,46 +516,66 @@
                 const musicBtn = document.getElementById('music-btn');
                 const musicIcon = document.getElementById('music-icon');
                 let isMusicPlaying = false;
+                let isAudioLoading = false; // Prevent concurrent play calls
 
                 const startMusic = () => {
+                    if (isMusicPlaying || isAudioLoading) return;
+                    isAudioLoading = true;
+
                     music.play().then(() => {
                         isMusicPlaying = true;
+                        isAudioLoading = false;
                         musicIcon.innerText = "🔊";
                         document.removeEventListener('click', startMusic);
                         document.removeEventListener('touchstart', startMusic);
-                    }).catch(e => console.log("Autoplay blocked", e));
+                    }).catch(e => {
+                        isAudioLoading = false;
+                        console.log("Initial autoplay attempt blocked (expected). Waiting for button click.");
+                    });
                 };
 
                 // Bridge for browser autoplay policy
                 document.addEventListener('click', startMusic);
                 document.addEventListener('touchstart', startMusic);
 
-                musicBtn.addEventListener('click', (e) => {
+                musicBtn.addEventListener('click', async (e) => {
                     e.stopPropagation();
+                    if (isAudioLoading) return; // Ignore clicks while transitioning
+
                     if (isMusicPlaying) {
                         music.pause();
                         musicIcon.innerText = "🔇";
                         isMusicPlaying = false;
                     } else {
-                        // Crucial for mobile: play() must be called in a click handler
-                        // Added error handling for the DOMException reported
-                        music.play().then(() => {
+                        isAudioLoading = true;
+                        musicIcon.innerText = "⏳"; // Loading feedback
+
+                        try {
+                            await music.play();
                             musicIcon.innerText = "🔊";
                             isMusicPlaying = true;
-                        }).catch(err => {
+                        } catch (err) {
                             console.error("Music play failed:", err);
-                            // If audio is blocked or aborted, try the next source automatically
-                            if (music.error || err.name === 'AbortError') {
-                                console.log("Attempting fallback source...");
-                                music.load(); // Reload to try next <source>
-                                music.play().then(() => {
+
+                            // If it's a source error or abort error, try to reload/fallback
+                            if (err.name === 'NotSupportedError' || err.name === 'AbortError' || music.error) {
+                                console.log("Play aborted or source issue. Refreshing audio source...");
+                                music.load(); // This forces browser to check the next <source>
+                                try {
+                                    await music.play();
                                     musicIcon.innerText = "🔊";
                                     isMusicPlaying = true;
-                                }).catch(e2 => {
-                                    alert("Music source blocked. Please host 'music.mp3' in your folder for 100% reliability.");
-                                });
+                                } catch (e2) {
+                                    console.error("All audio sources failed.", e2);
+                                    musicIcon.innerText = "❌";
+                                    setTimeout(() => musicIcon.innerText = "🎵", 2000);
+                                }
+                            } else {
+                                musicIcon.innerText = "🎵";
                             }
-                        });
+                        } finally {
+                            isAudioLoading = false;
+                        }
                     }
                 });
 
