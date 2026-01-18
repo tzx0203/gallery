@@ -95,11 +95,11 @@
         /* Instruction Panel */
         #gesture-dashboard {
             position: absolute;
-            top: 20px;
+            bottom: 20px;
             left: 20px;
-            width: 280px;
-            padding: 15px;
-            background: rgba(10, 5, 20, 0.6);
+            width: 240px;
+            padding: 12px;
+            background: rgba(10, 5, 20, 0.7);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 192, 203, 0.2);
             border-radius: 16px;
@@ -141,6 +141,11 @@
         #close-instr-btn {
             pointer-events: auto !important;
             cursor: pointer;
+        }
+
+        /* Adjust footer instr to not overlap */
+        #footer-instr {
+            display: none;
         }
     </style>
 
@@ -202,9 +207,9 @@
 
                 <!-- Link Button -->
                 <button id="link-btn"
-                    class="glass-panel glass-btn px-4 py-2.5 rounded-full text-xs transition flex items-center gap-2 font-bold tracking-wide"
+                    class="glass-panel glass-btn p-1.5 rounded-full text-[10px] transition flex items-center gap-1 font-bold tracking-wide"
                     title="Add Image URL">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-pink-400 pointer-events-none"
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-pink-400 pointer-events-none"
                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -213,9 +218,9 @@
 
                 <!-- Upload Button -->
                 <button id="upload-btn"
-                    class="glass-panel glass-btn px-4 py-2.5 rounded-full text-xs transition flex items-center gap-2 font-bold tracking-wide"
+                    class="glass-panel glass-btn p-1.5 rounded-full text-[10px] transition flex items-center gap-1 font-bold tracking-wide"
                     title="Upload Local Photos">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-pink-400 pointer-events-none"
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-pink-400 pointer-events-none"
                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -223,18 +228,18 @@
                 </button>
 
                 <button id="explore-btn"
-                    class="glass-panel glass-btn px-6 py-2.5 rounded-full text-xs font-bold tracking-widest transition border-pink-500/30 border">
-                    EXPLORE MILKY WAY
+                    class="glass-panel glass-btn px-3 py-1.5 rounded-full text-[10px] font-bold tracking-widest transition border-pink-500/30 border">
+                    EXPLORE
                 </button>
                 <button id="cam-btn"
-                    class="glass-panel glass-btn px-4 py-2.5 rounded-full text-xs transition flex items-center gap-2 font-bold tracking-wide"
+                    class="glass-panel glass-btn px-3 py-1.5 rounded-full text-[10px] transition flex items-center gap-1 font-bold tracking-wide"
                     title="Enable/Disable Hand Control">
                     HAND MAGIC
                 </button>
 
                 <!-- Debug View Toggle -->
                 <button id="view-btn"
-                    class="glass-panel glass-btn px-3 py-2.5 rounded-full text-xs transition flex items-center justify-center font-bold tracking-wide text-pink-300"
+                    class="glass-panel glass-btn p-1.5 rounded-full text-[10px] transition flex items-center justify-center font-bold tracking-wide text-pink-300"
                     title="Toggle Camera Preview">
                     👁️
                 </button>
@@ -242,10 +247,10 @@
         </div>
 
         <!-- Footer Instructions -->
-        <div class="text-center pointer-events-none pb-8 transition-opacity duration-500" id="footer-instr">
+        <div class="text-left pointer-events-none pb-4 transition-opacity duration-500" id="footer-instr">
             <div
-                class="inline-block px-6 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 shadow-lg">
-                <p id="instruction-text" class="text-pink-100 text-xs font-medium tracking-wider">
+                class="inline-block px-4 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 shadow-lg ml-4 mb-4">
+                <p id="instruction-text" class="text-pink-100 text-[10px] font-medium tracking-wider">
                     Ready to dive into the Heart?
                 </p>
             </div>
@@ -291,7 +296,7 @@
         <canvas id="hand-debug-canvas" width="320" height="240"></canvas>
 
         <!-- Hidden Video for CV -->
-        <video id="input_video"></video>
+        <video id="input_video" playsinline webkit-playsinline muted autoplay></video>
 
         <!-- 3D Canvas Container -->
         <div id="canvas-container" class="absolute inset-0 z-0 bg-transparent"></div>
@@ -572,7 +577,7 @@
             // --- Doll: Bubu (White/Panda-like) ---
             function createBubu() {
                 bubuGroup = new THREE.Group();
-                bubuGroup.position.set(-75, 5, -20);
+                bubuGroup.position.set(-45, 5, -20);
                 bubuGroup.rotation.y = 0.5;
                 scene.add(bubuGroup);
 
@@ -637,7 +642,7 @@
             // --- Doll: Dudu (Brown Bear) ---
             function createDudu() {
                 duduGroup = new THREE.Group();
-                duduGroup.position.set(75, 5, -20);
+                duduGroup.position.set(45, 5, -20);
                 duduGroup.rotation.y = -0.5;
                 scene.add(duduGroup);
 
@@ -820,8 +825,8 @@
                 ctx.shadowColor = "#ec4899";
                 ctx.shadowBlur = 30;
 
-                ctx.fillText("Happy", 512, 180);
-                ctx.fillText("Universe", 512, 320);
+                ctx.fillText("hepi", 512, 180);
+                ctx.fillText("anniversay !!", 512, 320);
 
                 const textTex = new THREE.CanvasTexture(canvas);
                 textTex.colorSpace = THREE.SRGBColorSpace;
@@ -1302,28 +1307,22 @@
 
                             // Navigation (Orbit) -> Hand X/Y to Rotate Camera around Target
                             // HYBRID MODE: Only apply hand rotation if Mouse is NOT interacting.
-                            const rotX = pos.x * 0.05;
-                            const rotY = pos.y * 0.05;
+                            const deadzone = 0.15; // Increased deadzone to prevent accidental drift
+                            const sensitivity = 0.04;
+
+                            let rotX = 0;
+                            let rotY = 0;
+
+                            if (Math.abs(pos.x) > deadzone) rotX = (pos.x - Math.sign(pos.x) * deadzone) * sensitivity;
+                            if (Math.abs(pos.y) > deadzone) rotY = (pos.y - Math.sign(pos.y) * deadzone) * sensitivity;
 
                             if (controls) {
-                                // controls.state === -1 (NONE) means no mouse interaction.
-                                // If user is dragging mouse (state 0/rotate), skip hand rotation.
-                                if (controls.state === -1) {
+                                if (controls.state === -1 && (rotX !== 0 || rotY !== 0)) {
                                     controls.autoRotate = false;
                                     controls.rotateLeft(rotX * 2);
                                     controls.rotateUp(rotY * 2);
                                     controls.update();
-                                } else {
-                                    // Mouse is valid, let OrbitControls handle it.
                                 }
-                            }
-
-                            // Navigation (Orbit)
-                            if (controls && controls.state === -1) {
-                                controls.autoRotate = false;
-                                controls.rotateLeft(rotX * 2);
-                                controls.rotateUp(rotY * 2);
-                                controls.update();
                             }
                         }
 
