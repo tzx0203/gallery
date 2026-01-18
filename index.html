@@ -152,7 +152,23 @@
 
         /* Adjust footer instr to not overlap */
         #footer-instr {
-            display: none;
+            display: block;
+        }
+
+        /* Music Toggle Button Styling */
+        #music-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+        }
+
+        .title-gradient {
+            background: linear-gradient(135deg, #fff 0%, #ff69b4 50%, #9400d3 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(255, 105, 180, 0.3);
         }
     </style>
 
@@ -204,11 +220,18 @@
         <!-- Header -->
         <div class="flex justify-between items-start pointer-events-auto">
             <div>
-                <h1 class="text-white text-3xl font-bold tracking-tight">Hi Nugget Rabbit Meinv SIa</h1>
-                <p class="text-pink-300 text-xs font-bold tracking-[0.3em] uppercase mt-1">Spatial Gallery</p>
+                <h1 class="title-gradient text-3xl font-extrabold tracking-tighter">Hi Nugget Rabbit Meinv SIa</h1>
+                <p class="text-pink-300 text-[10px] font-black tracking-[0.5em] uppercase mt-1 opacity-80">Spatial
+                    Gallery / Chaos Core</p>
             </div>
 
-            <div class="flex gap-4 pointer-events-auto">
+            <div class="flex gap-3 pointer-events-auto items-center">
+                <!-- Music Toggle -->
+                <button id="music-btn"
+                    class="glass-panel glass-btn p-2 rounded-full text-[12px] transition flex items-center justify-center font-bold tracking-wide text-pink-300 group"
+                    title="Toggle Background Music">
+                    <span id="music-icon" class="group-hover:scale-110 transition-transform">🎵</span>
+                </button>
                 <!-- Hidden File Input -->
                 <input type="file" id="file-input" multiple accept="image/*" style="display:none">
 
@@ -311,6 +334,13 @@
 
         <!-- 3D Canvas Container -->
         <div id="canvas-container" class="absolute inset-0 z-0 bg-transparent"></div>
+
+        <!-- Background Music -->
+        <audio id="bg-music" loop>
+            <source
+                src="https://er-sycdn.kuwo.cn/035da58561b9efa2d6e9170ddaaa9334/696c46d0/resource/30106/trackmedia/M500004bnALC4JrC7d.mp3?bitrate$128&from=vip"
+                type="audio/mpeg">
+        </audio>
 
         <!-- Main Logic -->
         <script type="module">
@@ -449,9 +479,36 @@
                 });
 
 
-                // Upload Logic
-                document.getElementById('upload-btn').addEventListener('click', () => document.getElementById('file-input').click());
-                document.getElementById('file-input').addEventListener('change', handleFileUpload);
+                // Music Logic
+                const music = document.getElementById('bg-music');
+                const musicBtn = document.getElementById('music-btn');
+                const musicIcon = document.getElementById('music-icon');
+                let isMusicPlaying = false;
+
+                const startMusic = () => {
+                    music.play().then(() => {
+                        isMusicPlaying = true;
+                        musicIcon.innerText = "🔊";
+                        document.removeEventListener('click', startMusic);
+                        document.removeEventListener('touchstart', startMusic);
+                    }).catch(e => console.log("Autoplay blocked", e));
+                };
+
+                // Bridge for browser autoplay policy
+                document.addEventListener('click', startMusic);
+                document.addEventListener('touchstart', startMusic);
+
+                musicBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (isMusicPlaying) {
+                        music.pause();
+                        musicIcon.innerText = "🔇";
+                    } else {
+                        music.play();
+                        musicIcon.innerText = "🔊";
+                    }
+                    isMusicPlaying = !isMusicPlaying;
+                });
 
                 // Link Logic
                 document.getElementById('link-btn').addEventListener('click', handleUrlInput);
@@ -1357,6 +1414,13 @@
                             if (currentMode === 'GALLERY') {
                                 if (!window.palmTimer) window.palmTimer = 0;
                                 window.palmTimer += 0.02;
+
+                                // Visual feedback for the hold
+                                if (virtualCursor) {
+                                    virtualCursor.scale.setScalar(2.0 * window.palmTimer);
+                                    virtualCursor.material.opacity = 0.5 + (window.palmTimer * 0.5);
+                                }
+
                                 if (window.palmTimer > 1.0) {
                                     toggleChaos();
                                     window.palmTimer = 0;
