@@ -342,11 +342,14 @@
         <!-- 3D Canvas Container -->
         <div id="canvas-container" class="absolute inset-0 z-0 bg-transparent"></div>
 
-        <!-- Background Music -->
+        <!-- Background Music: Using a more stable primary link with multiple sources -->
         <audio id="bg-music" loop>
-            <source
-                src="https://er-sycdn.kuwo.cn/035da58561b9efa2d6e9170ddaaa9334/696c46d0/resource/30106/trackmedia/M500004bnALC4JrC7d.mp3?bitrate$128&from=vip"
-                type="audio/mpeg">
+            <!-- Primary Choice: Romantic Piano (Royalty Free) -->
+            <source src="https://cdn.pixabay.com/audio/2022/11/22/audio_feb63283f5.mp3" type="audio/mpeg">
+            <!-- Fallback 1: Birthday / Happy theme -->
+            <source src="https://cdn.pixabay.com/audio/2022/01/10/audio_f536f4523c.mp3" type="audio/mpeg">
+            <!-- Local Fallback: Recommendation for the user to upload their own file -->
+            <source src="music.mp3" type="audio/mpeg">
         </audio>
 
         <!-- Main Logic -->
@@ -532,15 +535,47 @@
                     if (isMusicPlaying) {
                         music.pause();
                         musicIcon.innerText = "🔇";
+                        isMusicPlaying = false;
                     } else {
-                        music.play();
-                        musicIcon.innerText = "🔊";
+                        // Crucial for mobile: play() must be called in a click handler
+                        // Added error handling for the DOMException reported
+                        music.play().then(() => {
+                            musicIcon.innerText = "🔊";
+                            isMusicPlaying = true;
+                        }).catch(err => {
+                            console.error("Music play failed:", err);
+                            // If audio is blocked or aborted, try the next source automatically
+                            if (music.error || err.name === 'AbortError') {
+                                console.log("Attempting fallback source...");
+                                music.load(); // Reload to try next <source>
+                                music.play().then(() => {
+                                    musicIcon.innerText = "🔊";
+                                    isMusicPlaying = true;
+                                }).catch(e2 => {
+                                    alert("Music source blocked. Please host 'music.mp3' in your folder for 100% reliability.");
+                                });
+                            }
+                        });
                     }
-                    isMusicPlaying = !isMusicPlaying;
+                });
+
+                // Periodic check to ensure music is actually playing if supposed to
+                music.addEventListener('stalled', () => {
+                    if (isMusicPlaying) music.load();
                 });
 
                 // Link Logic
                 document.getElementById('link-btn').addEventListener('click', handleUrlInput);
+
+                // Upload Logic (MISSING LISTENERS FIXED)
+                const uploadBtn = document.getElementById('upload-btn');
+                const fileInput = document.getElementById('file-input');
+
+                uploadBtn.addEventListener('click', () => {
+                    fileInput.click();
+                });
+
+                fileInput.addEventListener('change', handleFileUpload);
             }
 
             // --- Fireworks Logic ---
