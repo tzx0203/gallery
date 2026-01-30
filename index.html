@@ -358,11 +358,17 @@
             import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
             // --- CONFIGURATION: YOUR IMAGES ---
-            // Replace these URLs with your own photos!
-            // Tips: 
-            // 1. Hosted URLs: Direct links from Google Drive, Dropbox, etc.
-            // 2. Local Files: If using GitHub, upload images to your repo and use relative paths like "./my-photo.jpg".
-            const myPhotos = [
+            // MODE A: Self-Hosted (RECOMMENDED for GitHub Pages)
+            // Just put your photos in the same folder as this file and name them 1.jpeg, 2.jpeg...
+            const localPhotos = [];
+            const photoCount = 50;
+            for (let i = 1; i <= photoCount; i++) {
+                // UPDATED: Pointing to root folder and using .jpeg to match your uploaded files
+                localPhotos.push(`./${i}.jpeg`);
+            }
+
+            // MODE B: Demo (Unsplash links used if local images fail to load)
+            const demoPhotos = [
                 "https://images.unsplash.com/photo-1501854140884-074bf86ee911?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
                 "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
                 "https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
@@ -370,6 +376,10 @@
                 "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
                 "https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
             ];
+
+            // Combine: Try local first, then demo
+            const myPhotos = [...localPhotos, ...demoPhotos];
+            // ---------------------------------
             // ---------------------------------
 
             // Global Error Handler for Debugging
@@ -1119,7 +1129,15 @@
 
                     let mat;
                     const url = myPhotos[i % myPhotos.length];
-                    const tex = loader.load(url);
+                    const tex = loader.load(url, undefined, undefined, (err) => {
+                        // If a local image (like 10.jpg) is missing, fall back to a random demo one
+                        const fallbackUrl = demoPhotos[Math.floor(Math.random() * demoPhotos.length)];
+                        loader.load(fallbackUrl, (fallTex) => {
+                            fallTex.colorSpace = THREE.SRGBColorSpace;
+                            card.material.map = fallTex;
+                            card.material.needsUpdate = true;
+                        });
+                    });
                     tex.colorSpace = THREE.SRGBColorSpace;
                     mat = new THREE.MeshBasicMaterial({
                         map: tex,
